@@ -5,8 +5,8 @@ Mattermost message builders — previews, dialogs, help, issue lists, bot postin
 import logging
 import httpx
 
-from config import resolve_project, get_project_labels, get_all_labels
-from llm import PROVIDER_DEFAULTS
+from issue_bot.core.config import resolve_project, get_project_labels, get_all_labels
+from issue_bot.backends.llm import PROVIDER_DEFAULTS
 
 log = logging.getLogger("issue-bot")
 

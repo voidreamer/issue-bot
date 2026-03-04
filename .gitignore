@@ -7,3 +7,4 @@ venv/
 dist/
 .DS_Store
 data/
+.pytest_cache/

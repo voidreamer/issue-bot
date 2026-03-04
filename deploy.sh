@@ -16,7 +16,8 @@ echo "==> Creating system user (if not exists)..."
 id -u issuebot &>/dev/null || sudo useradd -r -s /usr/sbin/nologin issuebot
 
 echo "==> Copying files..."
-sudo cp *.py requirements.txt "$APP_DIR/"
+sudo cp app.py requirements.txt "$APP_DIR/"
+sudo cp -r issue_bot/ "$APP_DIR/issue_bot/"
 
 echo "==> Creating data directory..."
 sudo mkdir -p "$APP_DIR/data"
