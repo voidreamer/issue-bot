@@ -1,0 +1,13 @@
+services:
+  issue-bot:
+    build: .
+    ports:
+      - "8321:8321"
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - bot-data:/app/data
+
+volumes:
+  bot-data:
