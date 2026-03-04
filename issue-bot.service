@@ -1,0 +1,16 @@
+[Unit]
+Description=Mattermost → GitLab Issue Bot
+After=network.target
+
+[Service]
+Type=simple
+User=issuebot
+Group=issuebot
+WorkingDirectory=/opt/issue-bot
+EnvironmentFile=/opt/issue-bot/.env
+ExecStart=/opt/issue-bot/venv/bin/uvicorn app:app --host 127.0.0.1 --port 8321
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
