@@ -5,7 +5,11 @@ Parses sub-commands, project aliases, template names, points, and prompt text.
 Priority: sub-command → project alias → template name → points → prompt
 """
 
+import re
 from dataclasses import dataclass, field
+
+
+_ASSIGNEE_RE = re.compile(r"^@([a-zA-Z0-9_.\-]+)$")
 
 
 @dataclass
@@ -16,6 +20,7 @@ class ParsedCommand:
     prompt: str = ""                # user's description
     template: str = ""              # bug, feature, chore, etc.
     raw_text: str = ""              # original text
+    assignees: list[str] = field(default_factory=list)  # @username tokens
 
     # search-specific
     search_query: str = ""
@@ -74,6 +79,19 @@ def parse_issue_command(
         # help: nothing more to parse
         if cmd.action == "help":
             return cmd
+
+    # Extract @username tokens from remaining tokens (create/epic/plan only)
+    rest = tokens[pos:]
+    assignee_tokens = []
+    filtered = []
+    for tok in rest:
+        m = _ASSIGNEE_RE.match(tok)
+        if m:
+            assignee_tokens.append(m.group(1))
+        else:
+            filtered.append(tok)
+    cmd.assignees = assignee_tokens
+    tokens = tokens[:pos] + filtered
 
     # For create / epic / plan — continue parsing remaining tokens
     while pos < len(tokens):

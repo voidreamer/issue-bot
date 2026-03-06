@@ -12,7 +12,7 @@ from issue_bot.core.config import resolve_project
 from issue_bot.core.templates import get_template
 from issue_bot.backends.gitlab import (
     create_gitlab_issue, get_gitlab_iterations, get_gitlab_milestones,
-    get_gitlab_project_members,
+    get_gitlab_project_members, fetch_project_context,
 )
 from issue_bot.backends.github import create_github_issue
 from issue_bot.backends.llm import call_llm
@@ -108,6 +108,8 @@ async def handle_button(request: Request):
             parent = data["parent"]
             parent_data = {**parent, "points": data.get("points", 1), "user": data.get("user", user),
                            "project_alias": project_alias, "project_id": project_id}
+            if data.get("assignee_id"):
+                parent_data["assignee_id"] = data["assignee_id"]
             parent_issue = await _create_issue(parent_data, user)
             parent_iid = parent_issue["iid"]
             created_urls = [f"- **[{parent['title']}]({parent_issue['web_url']})** (parent)"]
@@ -127,6 +129,8 @@ async def handle_button(request: Request):
                     "points": child.get("points", 1), "user": data.get("user", user),
                     "project_alias": project_alias, "project_id": project_id,
                 }
+                if data.get("assignee_id"):
+                    child_data["assignee_id"] = data["assignee_id"]
                 child_issue = await _create_issue(child_data, user)
                 created_urls.append(f"- **[{child['title']}]({child_issue['web_url']})** ({child.get('points', 1)} pts)")
                 deps.store.record_created_issue(
@@ -154,6 +158,8 @@ async def handle_button(request: Request):
                     "user": data.get("user", user),
                     "project_alias": project_alias, "project_id": project_id,
                 }
+                if data.get("assignee_id"):
+                    item_data["assignee_id"] = data["assignee_id"]
                 created = await _create_issue(item_data, user)
                 created_urls.append(f"- **[{issue_item['title']}]({created['web_url']})** ({issue_item.get('points', 1)} pts)")
                 deps.store.record_created_issue(
@@ -173,12 +179,18 @@ async def handle_button(request: Request):
         try:
             template = get_template(data.get("template", ""))
             project = deps.CFG["projects"].get(data.get("project_alias", ""), {})
+            project_id = data.get("project_id", "")
+            project_context = ""
+            if deps.CFG.get("inject_project_context", True) and project_id:
+                project_context = await fetch_project_context(deps.http_client, deps.CFG, project_id)
             new_data = await call_llm(
                 deps.http_client, deps.CFG, data["original_prompt"], data.get("points", 1),
                 labels=project.get("labels", ""), template_extra=template["system_prompt_extra"],
+                context=project_context,
             )
             # Preserve metadata
-            for key in ("points", "user", "project_alias", "project_id", "original_prompt", "template", "type"):
+            for key in ("points", "user", "project_alias", "project_id", "original_prompt",
+                        "template", "type", "assignee_id", "assignee_username", "assignee_warning"):
                 if key in data:
                     new_data[key] = data[key]
             deps.store.update_pending(issue_id, new_data)

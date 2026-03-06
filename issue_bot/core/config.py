@@ -45,6 +45,9 @@ def load_config() -> dict:
         # Phase 3
         "github_token": os.environ.get("GITHUB_TOKEN", ""),
         "github_url": os.environ.get("GITHUB_URL", "https://api.github.com"),
+
+        # Context injection
+        "inject_project_context": os.environ.get("INJECT_PROJECT_CONTEXT", "true").lower() == "true",
     }
 
     # --- Project resolution: legacy vs multi ---

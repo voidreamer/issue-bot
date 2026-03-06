@@ -38,7 +38,9 @@ RULES:
 
 3. Suggest 1-4 labels from this list: {labels}
    Pick only labels that genuinely fit.
-4. Respond ONLY with valid JSON, no markdown fences, no extra text:
+4. If PROJECT CONTEXT is provided, consider existing issues and milestones. \
+Reference related issues by number (e.g. "Related: #42") when relevant. Avoid duplicating existing work.
+5. Respond ONLY with valid JSON, no markdown fences, no extra text:
    {{"title": "...", "description": "...", "labels": ["label1","label2"]}}"""
 
 EPIC_SYSTEM_PROMPT = """You are an expert project manager. Given a high-level goal and story-point budget, \
@@ -49,7 +51,9 @@ RULES:
 2. Each child issue is a concrete, actionable task.
 3. Distribute points across children (they should roughly sum to the budget).
 4. Use labels from: {labels}
-5. Respond ONLY with valid JSON:
+5. If PROJECT CONTEXT is provided, consider existing issues and milestones. \
+Reference related issues by number when relevant. Avoid duplicating existing work.
+6. Respond ONLY with valid JSON:
    {{"parent": {{"title": "...", "description": "...", "labels": ["..."]}},
     "children": [{{"title": "...", "description": "...", "labels": ["..."], "points": N}}, ...]}}"""
 
@@ -61,7 +65,9 @@ RULES:
 2. Assign reasonable point values (1-8) based on complexity.
 3. Use the same issue structure as single issues (Summary, Context, Acceptance Criteria, Technical Notes).
 4. Use labels from: {labels}
-5. Respond ONLY with valid JSON:
+5. If PROJECT CONTEXT is provided, consider existing issues and milestones. \
+Reference related issues by number when relevant. Avoid duplicating existing work.
+6. Respond ONLY with valid JSON:
    {{"issues": [{{"title": "...", "description": "...", "labels": ["..."], "points": N}}, ...]}}"""
 
 
@@ -79,6 +85,7 @@ async def call_llm(
     points: int,
     labels: str = "",
     template_extra: str = "",
+    context: str = "",
 ) -> dict:
     """Call the configured LLM provider and return parsed JSON."""
     provider = cfg["llm_provider"].lower()
@@ -87,6 +94,8 @@ async def call_llm(
     base_url = cfg["llm_base_url"] or defaults["url"]
     system   = format_system_prompt(labels, template_extra)
     user_msg = f"Story points: {points}\nDescription: {prompt}"
+    if context:
+        user_msg += f"\n\n--- PROJECT CONTEXT ---\n{context}"
 
     if provider == "anthropic":
         resp = await http_client.post(base_url, headers={
@@ -116,6 +125,7 @@ async def call_llm_epic(
     prompt: str,
     points: int,
     labels: str = "",
+    context: str = "",
 ) -> dict:
     """Call LLM with the epic system prompt. Returns {parent, children}."""
     provider = cfg["llm_provider"].lower()
@@ -124,6 +134,8 @@ async def call_llm_epic(
     base_url = cfg["llm_base_url"] or defaults["url"]
     system   = EPIC_SYSTEM_PROMPT.format(labels=labels)
     user_msg = f"Total story points budget: {points}\nGoal: {prompt}"
+    if context:
+        user_msg += f"\n\n--- PROJECT CONTEXT ---\n{context}"
 
     if provider == "anthropic":
         resp = await http_client.post(base_url, headers={
@@ -152,6 +164,7 @@ async def call_llm_plan(
     cfg: dict,
     goals: str,
     labels: str = "",
+    context: str = "",
 ) -> dict:
     """Call LLM with the plan system prompt. Returns {issues: [...]}."""
     provider = cfg["llm_provider"].lower()
@@ -160,6 +173,8 @@ async def call_llm_plan(
     base_url = cfg["llm_base_url"] or defaults["url"]
     system   = PLAN_SYSTEM_PROMPT.format(labels=labels)
     user_msg = f"Sprint goals: {goals}"
+    if context:
+        user_msg += f"\n\n--- PROJECT CONTEXT ---\n{context}"
 
     if provider == "anthropic":
         resp = await http_client.post(base_url, headers={

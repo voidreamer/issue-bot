@@ -25,6 +25,8 @@ AI-powered issue creator for Mattermost. Type a slash command, get a fully struc
 - **Sprint planning** — `/issue plan Build auth, add profiles, notifications` generates a batch of independent issues
 - **Search & list** — `/issue list` and `/issue search <query>` to browse existing issues
 - **Webhook notifications** — Get Mattermost channel notifications when GitLab issues are opened, closed, or reopened
+- **Inline assignees** — `/issue @john 3 Fix the bug` assigns directly from the command
+- **Project context awareness** — The bot fetches recent issues and milestones from your project so the LLM can reference existing work, avoid duplicates, and align with your roadmap
 - **Assignees, milestones, iterations** — Full edit dialog with dropdowns pulled from your project
 - **Multiple LLM providers** — OpenAI, Anthropic, Ollama, Gemini
 - **Persistent storage** — SQLite-backed pending issues and creation audit log
@@ -36,6 +38,7 @@ AI-powered issue creator for Mattermost. Type a slash command, get a fully struc
 |---|---|
 | `/issue <points> <prompt>` | Create an issue in the default project |
 | `/issue <project> <points> <prompt>` | Create in a specific project |
+| `/issue @user <points> <prompt>` | Create and assign to a user |
 | `/issue bug\|feature\|chore <points> <prompt>` | Create with a template |
 | `/issue help` | Show commands, projects, LLM config, labels |
 | `/issue list [project]` | List recent open issues |
@@ -48,6 +51,7 @@ AI-powered issue creator for Mattermost. Type a slash command, get a fully struc
 ```bash
 /issue 3 Build login page with OAuth support
 /issue frontend 5 Add dark mode toggle to settings
+/issue @john 3 Fix crash on Safari when using SSO
 /issue bug 2 Login crashes on Safari when using SSO
 /issue feature 8 Add user profile page with avatar upload
 /issue epic 13 Build complete notification system
@@ -163,6 +167,7 @@ Each project supports:
 | `MM_NOTIFY_CHANNEL_ID` | — | Channel ID for webhook notifications |
 | `GITHUB_TOKEN` | — | GitHub personal access token |
 | `GITHUB_URL` | `https://api.github.com` | GitHub API base URL |
+| `INJECT_PROJECT_CONTEXT` | `true` | Fetch recent issues/milestones for LLM context |
 
 ## Mattermost Setup
 
