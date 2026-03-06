@@ -64,6 +64,12 @@ def test_create_calls_llm_and_stores(app_client):
     mock_resp.raise_for_status = MagicMock()
     deps.http_client.post = AsyncMock(return_value=mock_resp)
 
+    # Mock GET for project context (issues + milestones)
+    mock_get_resp = MagicMock()
+    mock_get_resp.json.return_value = []
+    mock_get_resp.raise_for_status = MagicMock()
+    deps.http_client.get = AsyncMock(return_value=mock_get_resp)
+
     resp = app_client.post("/slash/issue", data=_form(text="3 Build login page"))
     body = resp.json()
     assert body["response_type"] == "in_channel"
@@ -80,6 +86,12 @@ def test_create_unknown_project(app_client):
     }
     mock_resp.raise_for_status = MagicMock()
     deps.http_client.post = AsyncMock(return_value=mock_resp)
+
+    # Mock GET for project context
+    mock_get_resp = MagicMock()
+    mock_get_resp.json.return_value = []
+    mock_get_resp.raise_for_status = MagicMock()
+    deps.http_client.get = AsyncMock(return_value=mock_get_resp)
 
     resp = app_client.post("/slash/issue", data=_form(text="nonexistent 3 Build it"))
     assert resp.status_code == 200

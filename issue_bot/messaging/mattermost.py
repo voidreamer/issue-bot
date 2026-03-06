@@ -38,6 +38,12 @@ def build_preview_message(cfg: dict, issue_id: str, data: dict) -> dict:
         project_name = cfg["projects"].get(project_alias, {}).get("name", project_alias)
         project_tag = f" | **Project:** {project_name}"
 
+    assignee_tag = ""
+    if data.get("assignee_username"):
+        assignee_tag = f" | **Assignee:** @{data['assignee_username']}"
+    elif data.get("assignee_warning"):
+        assignee_tag = f" | :warning: {data['assignee_warning']}"
+
     bot_url = cfg["bot_url"]
 
     return {
@@ -45,7 +51,7 @@ def build_preview_message(cfg: dict, issue_id: str, data: dict) -> dict:
         "text": (
             f"### Issue Preview\n"
             f"**Title:** {title}\n"
-            f"**Points:** {points} | **Labels:** {label_str}{project_tag}\n\n"
+            f"**Points:** {points} | **Labels:** {label_str}{project_tag}{assignee_tag}\n\n"
             f"---\n{preview_desc}\n---\n"
             f"_by @{user}_"
         ),
@@ -108,6 +114,12 @@ def build_epic_preview_message(cfg: dict, issue_id: str, data: dict) -> dict:
         project_name = cfg["projects"].get(project_alias, {}).get("name", project_alias)
         project_tag = f" | **Project:** {project_name}"
 
+    assignee_tag = ""
+    if data.get("assignee_username"):
+        assignee_tag = f" | **Assignee:** @{data['assignee_username']}"
+    elif data.get("assignee_warning"):
+        assignee_tag = f" | :warning: {data['assignee_warning']}"
+
     child_lines = []
     total_points = 0
     for i, child in enumerate(children, 1):
@@ -123,7 +135,7 @@ def build_epic_preview_message(cfg: dict, issue_id: str, data: dict) -> dict:
         "text": (
             f"### Epic Preview\n"
             f"**Parent:** {parent['title']}\n"
-            f"**Labels:** {format_labels(parent.get('labels', []))}{project_tag}\n"
+            f"**Labels:** {format_labels(parent.get('labels', []))}{project_tag}{assignee_tag}\n"
             f"**Total points:** {total_points}\n\n"
             f"---\n**Child Issues:**\n{children_text}\n---\n"
             f"_by @{user}_"
@@ -168,6 +180,12 @@ def build_plan_preview_message(cfg: dict, issue_id: str, data: dict) -> dict:
         project_name = cfg["projects"].get(project_alias, {}).get("name", project_alias)
         project_tag = f" | **Project:** {project_name}"
 
+    assignee_tag = ""
+    if data.get("assignee_username"):
+        assignee_tag = f" | **Assignee:** @{data['assignee_username']}"
+    elif data.get("assignee_warning"):
+        assignee_tag = f" | :warning: {data['assignee_warning']}"
+
     issue_lines = []
     total_points = 0
     for i, issue in enumerate(issues, 1):
@@ -182,7 +200,7 @@ def build_plan_preview_message(cfg: dict, issue_id: str, data: dict) -> dict:
         "response_type": "in_channel",
         "text": (
             f"### Sprint Plan Preview\n"
-            f"**Issues:** {len(issues)} | **Total points:** {total_points}{project_tag}\n\n"
+            f"**Issues:** {len(issues)} | **Total points:** {total_points}{project_tag}{assignee_tag}\n\n"
             f"---\n{issues_text}\n---\n"
             f"_by @{user}_"
         ),
@@ -352,6 +370,7 @@ def build_help_response(cfg: dict) -> dict:
         "|---|---|\n"
         "| `/issue <points> <prompt>` | Create an issue (default project) |\n"
         "| `/issue <project> <points> <prompt>` | Create in a specific project |\n"
+        "| `/issue @user <points> <prompt>` | Create and assign to a user |\n"
         "| `/issue bug\\|feature\\|chore <points> <prompt>` | Create with a template |\n"
         "| `/issue help` | Show this help |\n"
         "| `/issue list [project]` | List recent open issues |\n"

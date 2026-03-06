@@ -110,6 +110,12 @@ def test_button_regenerate(app_client):
     mock_resp.raise_for_status = MagicMock()
     deps.http_client.post = AsyncMock(return_value=mock_resp)
 
+    # Mock GET for project context (issues + milestones)
+    mock_get_resp = MagicMock()
+    mock_get_resp.json.return_value = []
+    mock_get_resp.raise_for_status = MagicMock()
+    deps.http_client.get = AsyncMock(return_value=mock_get_resp)
+
     resp = app_client.post("/actions/button", json={
         "context": {"action": "regenerate", "issue_id": "test123"},
         "user_name": "alice",
